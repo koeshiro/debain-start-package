@@ -1,12 +1,28 @@
 #!/bin/bash
+echo "Starting installing"
 apt-get install nano
+echo "nano installed"
 apt-get install whois
+echo "whois installed"
 apt-get install openvpn
+echo "openvpn installed"
 apt-get install libpam-pwdfile
+echo "libpam-pwdfile installed"
 apt-get install dante-server
+echo "dante-server installed"
 apt-get install apache2 mysql-server php php-mysql libapache2-mpm-itk 
-apt-get install nginx
+echo "amp installed"
 echo "" > /etc/apache2/ports.conf
+service apache2 stop
+echo "apache pre configured and stoped"
+
+apt-get install nginx
+echo "nginx installed"
+
+service nginx stop
+echo "nginx stoped"
+echo "Start dante-server configuration"
+
 #dante-server conf
 echo "Введите ip"
 read ip
@@ -41,6 +57,7 @@ socks block {\n
         log: connect error\n
 }
 "
+
 pam_pass_conf="
 auth required pam_pwdfile.so pwdfile /etc/danted.sockd.passwd\n
 account required pam_permit.so"
@@ -59,7 +76,7 @@ exec 1>&-
 exec 1>&6
 # close FD6
 exec 6>&-
-
+echo "Start dante-server user config generated"
 #dante
 touch /etc/danted.conf
 
@@ -75,7 +92,7 @@ exec 1>&-
 exec 1>&6
 # close FD6
 exec 6>&-
-
+echo "Start dante-server config generated"
 #danted users
 echo "Введите имя пользователя dante-server"
 read dante_user
@@ -98,12 +115,15 @@ exec 1>&-
 exec 1>&6
 # close FD6
 exec 6>&-
-
+service danted start
+echo "Start dante-server configured and started"
+echo "Setting iptables rules"
 #dante iptables
 iptables -P INPUT ACCEPT
 iptables -P OUTPUTE ACCEPT
 iptables -P FORWARD ACCEPT
 
 iptables -A INPUT -i $ip -p tcp -m tcp --dport 1080 -j ACCEPT
-iptables -A OUTPUTE -i $ip -p tcp -m tcp --dport 1080 -j ACCEPT
+iptables -A OUTPUTE -o $ip -p tcp -m tcp --dport 1080 -j ACCEPT
 iptables -A FORWARD -i $ip -p tcp -m tcp --dport 1080 -j ACCEPT
+iptables -A FORWARD -o $ip -p tcp -m tcp --dport 1080 -j ACCEPT
