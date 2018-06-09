@@ -1,5 +1,7 @@
 #!/bin/bash
 echo "Starting installing"
+apt-get install sudo
+echo "sudo installed"
 apt-get install nano
 echo "nano installed"
 apt-get install whois
