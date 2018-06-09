@@ -122,10 +122,10 @@ echo "Start dante-server configured and started"
 echo "Setting iptables rules"
 #dante iptables
 iptables -P INPUT ACCEPT
-iptables -P OUTPUTE ACCEPT
+iptables -P OUTPUT ACCEPT
 iptables -P FORWARD ACCEPT
 
 iptables -A INPUT -i $ip -p tcp -m tcp --dport 1080 -j ACCEPT
-iptables -A OUTPUTE -o $ip -p tcp -m tcp --dport 1080 -j ACCEPT
+iptables -A OUTPUT -o $ip -p tcp -m tcp --dport 1080 -j ACCEPT
 iptables -A FORWARD -i $ip -p tcp -m tcp --dport 1080 -j ACCEPT
 iptables -A FORWARD -o $ip -p tcp -m tcp --dport 1080 -j ACCEPT
