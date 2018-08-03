@@ -4,14 +4,13 @@ read sitename
 echo "Введите порт"
 read siteport
 echo "Введите имя пользователя"
-read username 
+read username
 #Nginx settings
 mkdir /home/$username/data/html/$sitename
 chmod 755 -R /home/$username/data/html/$sitename
 chown $username:$username /home/$username/data/html/$sitename
 mkdir /home/$username/data/logs/$sitename/
-nginx="
-server {\n
+nginx="server {\n
 	listen *:80;\n
 	server_name ${sitename};\n
 	access_log /home/${username}/data/logs/${sitename}/nginx_access_${sitename}.log;\n
@@ -40,8 +39,7 @@ server {\n
 	}\n
 }
 "
-apache="
-<VirtualHost 127.0.0.1:${siteport}>\n
+apache="<VirtualHost 127.0.0.1:${siteport}>\n
         ServerAdmin webmaster@localhost\n
         DocumentRoot /home/${username}/data/html/${sitename}\n
 \n
@@ -70,7 +68,7 @@ exec 6>&1
 exec 1>/etc/nginx/sites-available/$sitename.conf
 # write nginx data
 echo -e $nginx
-# close file 
+# close file
 exec 1>&-
 # close file stream
 exec 1>&6
@@ -87,7 +85,7 @@ exec 6>&1
 exec 1>/etc/apache2/sites-available/$sitename.conf
 # write apache2 data
 echo -e $apache
-# close file 
+# close file
 exec 1>&-
 # close file stream
 exec 1>&6

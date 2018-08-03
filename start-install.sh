@@ -12,13 +12,15 @@ apt-get install libpam-pwdfile
 echo "libpam-pwdfile installed"
 apt-get install dante-server
 echo "dante-server installed"
-apt-get install apache2 mysql-server php php-mysql libapache2-mpm-itk 
-echo "amp installed"
+apt-get install apache2 mysql-server php php-mysql libapache2-mpm-itk
 echo "" > /etc/apache2/ports.conf
+rm -R /etc/apache2/sites-*/*
+echo "lamp installed"
 service apache2 stop
 echo "apache pre configured and stoped"
 
 apt-get install nginx
+rm -R /etc/nginx/sites-*/*
 echo "nginx installed"
 
 service nginx stop
@@ -28,8 +30,7 @@ echo "Start dante-server configuration"
 #dante-server conf
 echo "Введите ip"
 read ip
-dante="
-logoutput: /var/log/danted.log\n
+dante="logoutput: /var/log/danted.log\n
 internal: ${ip} port = 1080\n
 external: ${ip}\n
 \n
@@ -57,11 +58,9 @@ socks pass {\n
 socks block {\n
         from: 0.0.0.0/0 to: 0.0.0.0/0\n
         log: connect error\n
-}
-"
+}"
 
-pam_pass_conf="
-auth required pam_pwdfile.so pwdfile /etc/danted.sockd.passwd\n
+pam_pass_conf="auth required pam_pwdfile.so pwdfile /etc/danted.sockd.passwd\n
 account required pam_permit.so"
 #dante
 touch /etc/pam.d/sockd
@@ -72,7 +71,7 @@ exec 6>&1
 exec 1>/etc/pam.d/sockd
 # write pam_pass_conf data
 echo -e $pam_pass_conf
-# close file 
+# close file
 exec 1>&-
 # close file stream
 exec 1>&6
@@ -88,7 +87,7 @@ exec 6>&1
 exec 1>/etc/danted.conf
 # write dante data
 echo -e $dante
-# close file 
+# close file
 exec 1>&-
 # close file stream
 exec 1>&6
@@ -111,15 +110,73 @@ exec 6>&1
 exec 1>/etc/danted.sockd.passwd
 # write pam_pass_conf data
 echo -e $dant_first_user
-# close file 
+# close file
 exec 1>&-
 # close file stream
 exec 1>&6
 # close FD6
 exec 6>&-
 service danted start
-echo "Start dante-server configured and started"
+echo "Dante-server configured and started"
+
+#openvpn
+openvpn="client-to-client\n
+port 1194\n
+proto tcp\n
+dev tun\n
+ca /etc/openvpn/ca/ca.crt\n
+cert /etc/openvpn/keys/server.crt\n
+key /etc/openvpn/keys/server.key\n
+dh /etc/openvpn/dh/dh2048.pem\n
+tls-server\n
+tls-auth /etc/openvpn/ta/ta.key\n
+auth SHA512\n
+\n
+server 10.8.0.0 255.255.255.0\n
+ifconfig-pool-persist ipp.txt\n
+keepalive 10 120\n
+#persist-key\n
+#persist-tun\n
+status openvpn-status.log\n
+log /var/log/openvpn.log\n
+verb 3"
+
+source /etc/openvpn/easy-rsa/clean-all
+source /etc/openvpn/easy-rsa/vars
+#ca
+sh /etc/openvpn/easy-rsa/build-ca
+mkdir /etc/openvpn/ca/
+cp /etc/openvpn/easy-rsa/keys/ca* /etc/openvpn/ca/
+#server keys
+sh /etc/openvpn/easy-rsa/build-key-server server
+mkdir /etc/openvpn/keys/
+cp /etc/openvpn/easy-rsa/keys/server.* /etc/openvpn/keys/
+#DH file
+sh /etc/openvpn/easy-rsa/build-dh
+mkdir /etc/openvpn/dh/
+cp /etc/openvpn/easy-rsa/keys/dh* /etc/openvpn/dh/
+#ta file
+mkdir /etc/openvpn/ta/
+openvpn --genkey --secret /etc/openvpn/ta/ta.key
+
+#openvpn conf
+touch /etc/openvpn/server.conf
+exec 6>&1
+# open file for writing
+exec 1>/etc/openvpn/server.conf
+# write pam_pass_conf data
+echo -e $openvpn
+# close file
+exec 1>&-
+# close file stream
+exec 1>&6
+# close FD6
+exec 6>&-
+openvpn /etc/openvpn/server.conf
+echo "Openvpn configured and started"
+
 echo "Setting iptables rules"
+
 #dante iptables
 iptables -P INPUT ACCEPT
 iptables -P OUTPUT ACCEPT
